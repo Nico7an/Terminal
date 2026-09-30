@@ -19,12 +19,12 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * In-app updates from the GitHub releases of the (private) repository.
+ * In-app updates from the GitHub releases of the public repository.
  * Same package name + same signing key = Android keeps all app data (servers, keys) across the update.
  */
 object Updater {
 
-    data class Release(val version: String, val apiAssetUrl: String)
+    data class Release(val version: String, val downloadUrl: String)
 
     private const val TAG = "Updater"
     private const val CHECK_INTERVAL_MS = 15 * 60 * 1000L
@@ -33,11 +33,8 @@ object Updater {
     private var lastCheck = 0L
     private var cached: Release? = null
 
-    private val enabled get() = BuildConfig.UPDATE_TOKEN.isNotEmpty()
-
     /** Calls back on the main thread with a newer release, or null. Network is hit at most every 15 min. */
     fun check(callback: (Release?) -> Unit) {
-        if (!enabled) return callback(null)
         if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL_MS) return callback(cached)
         Thread({
             val release = runCatching { fetchLatest() }
@@ -50,7 +47,7 @@ object Updater {
     }
 
     private fun fetchLatest(): Release? {
-        val conn = api("https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases/latest")
+        val conn = http("https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases/latest")
         conn.setRequestProperty("Accept", "application/vnd.github+json")
         conn.inputStream.use { stream ->
             val json = JSONObject(stream.readBytes().toString(Charsets.UTF_8))
@@ -58,18 +55,16 @@ object Updater {
             for (i in 0 until assets.length()) {
                 val asset = assets.getJSONObject(i)
                 if (asset.getString("name").endsWith(".apk")) {
-                    return Release(json.getString("tag_name").removePrefix("v"), asset.getString("url"))
+                    return Release(json.getString("tag_name").removePrefix("v"), asset.getString("browser_download_url"))
                 }
             }
         }
         return null
     }
 
-    private fun api(url: String) = (URL(url).openConnection() as HttpURLConnection).apply {
+    private fun http(url: String) = (URL(url).openConnection() as HttpURLConnection).apply {
         connectTimeout = 10_000
-        readTimeout = 20_000
-        setRequestProperty("Authorization", "Bearer ${BuildConfig.UPDATE_TOKEN}")
-        setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+        readTimeout = 30_000
     }
 
     /** "1.10.0" > "1.9.3"; a dev build is older than any release. */
@@ -109,18 +104,8 @@ object Updater {
     }
 
     private fun download(context: Context, release: Release, progress: (Int) -> Unit): File {
-        // The asset API answers with a redirect to a signed storage URL, which must not receive our token.
-        val conn = api(release.apiAssetUrl)
-        conn.setRequestProperty("Accept", "application/octet-stream")
-        conn.instanceFollowRedirects = false
-        val stream = if (conn.responseCode in 300..399) {
-            val location = conn.getHeaderField("Location")
-            conn.disconnect()
-            (URL(location).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 10_000
-                readTimeout = 30_000
-            }
-        } else conn
+        // github.com redirects to its storage host, followed automatically (https to https).
+        val stream = http(release.downloadUrl)
         val total = stream.contentLengthLong
         val file = File(context.cacheDir, "update.apk")
         stream.inputStream.use { input ->

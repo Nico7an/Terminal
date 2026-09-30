@@ -19,7 +19,6 @@ android {
         versionName = versionNameEnv
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "UPDATE_REPO", "\"Nico7an/Terminal\"")
-        buildConfigField("String", "UPDATE_TOKEN", "\"${System.getenv("UPDATE_TOKEN") ?: ""}\"")
     }
 
     signingConfigs {

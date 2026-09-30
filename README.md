@@ -15,7 +15,7 @@ Client SSH Android minimaliste (téléphones et tablettes) : une liste de serveu
 ## Publier une version
 
 Chaque push sur `main` compile l'APK signé et crée une release `v1.0.<n>` ; l'appli propose la mise à jour.
-Le test sur émulateur (`Smoke test`) se lance à la main depuis l'onglet Actions.
+En parallèle, `Smoke test` lance l'appli sur un émulateur avec une vraie connexion SSH.
 
 ## Secrets GitHub Actions
 
@@ -24,7 +24,6 @@ Le test sur émulateur (`Smoke test`) se lance à la main depuis l'onglet Action
 | `SIGNING_KEYSTORE_B64` | keystore PKCS12 en base64 — **toujours le même**, sinon Android refuse la mise à jour |
 | `SIGNING_STORE_PASSWORD` | mot de passe du keystore |
 | `SIGNING_KEY_ALIAS` | alias de la clé |
-| `UPDATE_TOKEN` | token GitHub *fine-grained*, lecture seule sur ce dépôt (`Contents: Read`), pour lire les releases du dépôt privé |
 
 ## Code tiers
 

@@ -47,7 +47,6 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
-          UPDATE_TOKEN: ${{ secrets.UPDATE_TOKEN }}
         run: ./gradlew --no-daemon assembleRelease
 
       - name: Rename APK
