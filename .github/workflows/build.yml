@@ -3,7 +3,6 @@ name: Build
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -24,17 +23,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Version from tag
+      - name: Version
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            V="${GITHUB_REF_NAME#v}"
-            IFS=. read -r MA MI PA <<< "$V"
-            echo "VERSION_NAME=$V" >> "$GITHUB_ENV"
-            echo "VERSION_CODE=$(( MA * 1000000 + MI * 1000 + PA ))" >> "$GITHUB_ENV"
+          # Every push on main is a release: 1.0.<run number>, always increasing.
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "VERSION_NAME=0.0.0-pr.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           else
-            echo "VERSION_NAME=0.0.0-dev.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
-            echo "VERSION_CODE=1" >> "$GITHUB_ENV"
+            echo "VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           fi
+          echo "VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
       - name: Signing key
         env:
@@ -64,7 +61,7 @@ jobs:
           path: Terminal-*.apk
 
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" Terminal-*.apk --title "Terminal ${VERSION_NAME}" --generate-notes
+        run: gh release create "v${VERSION_NAME}" Terminal-*.apk --target "$GITHUB_SHA" --title "Terminal ${VERSION_NAME}" --generate-notes

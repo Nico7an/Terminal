@@ -14,12 +14,8 @@ Client SSH Android minimaliste (téléphones et tablettes) : une liste de serveu
 
 ## Publier une version
 
-```sh
-git tag v1.2.0 && git push origin v1.2.0
-```
-
-GitHub Actions compile l'APK signé et crée la release ; l'appli propose la mise à jour.
-Chaque push sur `main` produit aussi un APK de test (artefact du workflow).
+Chaque push sur `main` compile l'APK signé et crée une release `v1.0.<n>` ; l'appli propose la mise à jour.
+Le test sur émulateur (`Smoke test`) se lance à la main depuis l'onglet Actions.
 
 ## Secrets GitHub Actions
 
