@@ -1,0 +1,58 @@
+name: Smoke test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Local sshd with a throwaway key
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq openssh-server
+          ssh-keygen -t ed25519 -N "" -q -f "$RUNNER_TEMP/ci_key"
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh && chmod go-w ~
+          cat "$RUNNER_TEMP/ci_key.pub" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys
+          sudo systemctl start ssh || sudo service ssh start
+          ssh -o StrictHostKeyChecking=no -i "$RUNNER_TEMP/ci_key" "$USER@127.0.0.1" echo sshd ready
+          echo "SSH_USER=$USER" >> "$GITHUB_ENV"
+          echo "SSH_KEY=$(base64 -w0 "$RUNNER_TEMP/ci_key")" >> "$GITHUB_ENV"
+          echo "SSH_HOST_KEY=$(cut -d' ' -f1,2 /etc/ssh/ssh_host_ed25519_key.pub)" >> "$GITHUB_ENV"
+
+      - name: Build
+        env:
+          ALLOW_DEBUG_SIGNING: "1"
+        run: ./gradlew --no-daemon assembleDebug assembleDebugAndroidTest assembleRelease
+
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: ./ci/smoke.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-output
+          path: smoke-output/

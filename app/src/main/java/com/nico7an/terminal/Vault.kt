@@ -75,6 +75,15 @@ object Vault {
         loaded = true
     }
 
+    /** Drops the in-memory state and reads the file again (tests the encryption round trip). */
+    internal fun reload(context: Context) = synchronized(lock) {
+        servers.clear()
+        keys.clear()
+        knownHosts.clear()
+        loaded = false
+        load(context)
+    }
+
     private fun ensureLoaded() {
         if (!loaded) load(App.instance)
     }

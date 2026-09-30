@@ -17,6 +17,7 @@ android {
         targetSdk = 36
         versionCode = versionCodeEnv
         versionName = versionNameEnv
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "UPDATE_REPO", "\"Nico7an/Terminal\"")
         buildConfigField("String", "UPDATE_TOKEN", "\"${System.getenv("UPDATE_TOKEN") ?: ""}\"")
     }
@@ -35,11 +36,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installable next to the real app.
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            if (System.getenv("SIGNING_STORE_FILE") != null) signingConfig = signingConfigs.getByName("release")
+            signingConfig = when {
+                System.getenv("SIGNING_STORE_FILE") != null -> signingConfigs.getByName("release")
+                // Only for the CI smoke test, never published.
+                System.getenv("ALLOW_DEBUG_SIGNING") == "1" -> signingConfigs.getByName("debug")
+                else -> null
+            }
         }
     }
 
@@ -70,4 +80,7 @@ dependencies {
     implementation("androidx.annotation:annotation:1.9.1")
     implementation("com.hierynomus:sshj:0.41.1")
     implementation("org.bouncycastle:bcprov-jdk18on:1.84")
+
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
 }
