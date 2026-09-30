@@ -69,4 +69,5 @@ kotlin {
 dependencies {
     implementation("androidx.annotation:annotation:1.9.1")
     implementation("com.hierynomus:sshj:0.41.1")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.84")
 }
