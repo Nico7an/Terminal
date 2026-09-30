@@ -44,7 +44,7 @@ class TerminalActivity : Activity(), Sessions.Listener, TerminalViewClient {
         disconnectedBar = findViewById(R.id.disconnected)
         disconnectedText = findViewById(R.id.disconnected_text)
 
-        fontSize = prefs.getInt("fontSize", dp(13))
+        fontSize = prefs.getInt("fontSize", dp(12))
         terminal.setTerminalViewClient(this)
         terminal.setTextSize(fontSize)
         terminal.setTypeface(resources.getFont(R.font.cascadia_mono))

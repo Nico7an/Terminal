@@ -115,6 +115,9 @@ class SmokeTest {
     }
 
     private fun shot(name: String) {
+        // The CI emulator is slow: let the screen settle before capturing.
+        instrumentation.waitForIdleSync()
+        Thread.sleep(2500)
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
         val dir = instrumentation.targetContext.getExternalFilesDir(null)!!
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
