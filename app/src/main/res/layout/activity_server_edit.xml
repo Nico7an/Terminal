@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/chrome"
+    android:orientation="vertical">
+
+    <include layout="@layout/header" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
+
+            <TextView style="@style/Label" android:layout_marginTop="4dp" android:text="Nom" />
+            <EditText android:id="@+id/name" style="@style/Field" android:hint="Mon serveur" android:inputType="textCapSentences" />
+
+            <TextView style="@style/Label" android:text="Hôte" />
+            <EditText android:id="@+id/host" style="@style/Field" android:fontFamily="@font/cascadia_mono" android:hint="192.168.1.10 ou machine.tailnet.ts.net" android:inputType="textUri" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:orientation="vertical">
+
+                    <TextView style="@style/Label" android:text="Utilisateur" />
+                    <EditText android:id="@+id/user" style="@style/Field" android:fontFamily="@font/cascadia_mono" android:hint="root" android:inputType="textNoSuggestions" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView style="@style/Label" android:text="Port" />
+                    <EditText android:id="@+id/port" style="@style/Field" android:fontFamily="@font/cascadia_mono" android:hint="22" android:inputType="number" android:maxLength="5" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView style="@style/Label" android:text="Authentification" />
+
+            <RadioGroup
+                android:id="@+id/auth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton android:id="@+id/auth_key" style="@style/Segment" android:text="Clé SSH" />
+                <RadioButton android:id="@+id/auth_password" style="@style/Segment" android:layout_marginStart="6dp" android:text="Mot de passe" />
+                <RadioButton android:id="@+id/auth_none" style="@style/Segment" android:layout_marginStart="6dp" android:text="Aucune" />
+            </RadioGroup>
+
+            <LinearLayout
+                android:id="@+id/key_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView style="@style/Label" android:text="Clé" />
+                <TextView android:id="@+id/key" style="@style/Field" android:clickable="true" android:focusable="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/password_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView style="@style/Label" android:text="Mot de passe" />
+                <EditText android:id="@+id/password" style="@style/Field" android:hint="Vide = demandé à chaque connexion" android:inputType="textPassword" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/none_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="3dp"
+                android:text="Pour Tailscale SSH : le serveur autorise la connexion via ton identité Tailscale, aucun secret n'est envoyé."
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <Button android:id="@+id/cancel" style="@style/ButtonSubtle" android:text="Annuler" />
+        <Button android:id="@+id/save" style="@style/ButtonAccent" android:layout_marginStart="8dp" android:text="Enregistrer" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,24 @@
+<!-- Windows 11 Terminal style: dark window, light title bar, ">_" prompt. Safe zone is the centered 66x66. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- window body -->
+    <path android:fillColor="#FF0C0C0C" android:strokeColor="#FF5A5A5A" android:strokeWidth="1"
+        android:pathData="M30,32 h48 a5,5 0 0 1 5,5 v34 a5,5 0 0 1 -5,5 h-48 a5,5 0 0 1 -5,-5 v-34 a5,5 0 0 1 5,-5 z" />
+    <!-- title bar -->
+    <path android:pathData="M30,32 h48 a5,5 0 0 1 5,5 v6 h-58 v-6 a5,5 0 0 1 5,-5 z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="25" android:startY="32" android:endX="83" android:endY="43"
+                android:startColor="#FF6B6B6B" android:endColor="#FF4A4A4A" />
+        </aapt:attr>
+    </path>
+    <!-- chevron -->
+    <path android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M36,51 L45,58 L36,65">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:type="linear" android:startX="36" android:startY="51" android:endX="45" android:endY="65"
+                android:startColor="#FFFFFFFF" android:endColor="#FFB8B8B8" />
+        </aapt:attr>
+    </path>
+    <!-- underscore -->
+    <path android:strokeColor="#FFCCCCCC" android:strokeWidth="4" android:strokeLineCap="round" android:pathData="M50,65 L64,65" />
+</vector>
