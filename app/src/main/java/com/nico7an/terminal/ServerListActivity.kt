@@ -66,7 +66,7 @@ class ServerListActivity : Activity() {
     override fun onResume() {
         super.onResume()
         val saved = Vault.servers()
-        servers = listOf(Adb.server) + saved
+        servers = listOfNotNull(Linux.server.takeIf { Linux.supported }, Adb.server) + saved
         adapter.notifyDataSetChanged()
         empty.visibility = if (saved.isEmpty()) View.VISIBLE else View.GONE
         Updater.check { release -> showUpdate(release) }
@@ -85,6 +85,13 @@ class ServerListActivity : Activity() {
     }
 
     private fun showMenu(anchor: View, server: Server) {
+        if (server.id == Linux.SERVER_ID) {
+            PopupMenu(this, anchor).apply {
+                menu.add("Réinstaller").setOnMenuItemClickListener { confirmLinuxReset(); true }
+                show()
+            }
+            return
+        }
         if (server.id == Adb.SERVER_ID) {
             // Built in: can be configured, never edited or deleted.
             PopupMenu(this, anchor).apply {
@@ -120,6 +127,21 @@ class ServerListActivity : Activity() {
             }
             show()
         }
+    }
+
+    private fun confirmLinuxReset() {
+        AlertDialog.Builder(this)
+            .setTitle("Réinstaller Linux ?")
+            .setMessage("Tout ce qui est dans Linux (paquets, fichiers de /root, connexions de Claude et Gemini) sera effacé, " +
+                "puis réinstallé à la prochaine ouverture.")
+            .setPositiveButton("Réinstaller") { _, _ ->
+                Sessions.tabs.filter { it.server.id == Linux.SERVER_ID }.forEach { Sessions.close(it) }
+                Thread({ Linux.reset() }, "linux-reset").start()
+                onResume()
+            }
+            .setNegativeButton("Annuler", null)
+            .show()
+            .getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.error))
     }
 
     private fun showUpdate(release: Updater.Release?) {
@@ -165,9 +187,14 @@ class ServerListActivity : Activity() {
             val server = servers[position]
             view.findViewById<TextView>(R.id.name).text = server.name
             val local = server.id == Adb.SERVER_ID
-            view.findViewById<TextView>(R.id.address).text =
-                if (local) "adb shell · ${android.os.Build.MODEL}" else server.address
+            val linux = server.id == Linux.SERVER_ID
+            view.findViewById<TextView>(R.id.address).text = when {
+                linux -> if (Linux.installed) "Alpine · npm, Claude Code, Gemini CLI" else "Alpine · installé à la première ouverture"
+                local -> "adb shell · ${android.os.Build.MODEL}"
+                else -> server.address
+            }
             view.findViewById<TextView>(R.id.auth).text = when {
+                linux -> "local"
                 local -> "adb"
                 server.auth == AuthType.KEY -> "clé"
                 server.auth == AuthType.PASSWORD -> "mdp"

@@ -21,8 +21,11 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 
 class Tab(val server: Server) {
-    val transport: TerminalSession.Transport =
-        if (server.id == Adb.SERVER_ID) AdbTransport(Sessions) else SshTransport(server, Sessions)
+    val transport: TerminalSession.Transport = when (server.id) {
+        Adb.SERVER_ID -> AdbTransport(Sessions)
+        Linux.SERVER_ID -> LinuxTransport()
+        else -> SshTransport(server, Sessions)
+    }
     val session = TerminalSession(transport, 5000, Sessions).apply { mSessionName = server.name }
 }
 

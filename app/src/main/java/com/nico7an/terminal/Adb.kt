@@ -216,7 +216,17 @@ object Adb {
      */
     fun testPermissions(): String? {
         val output = exec("pm grant ${App.instance.packageName} ${Manifest.permission.WRITE_SECURE_SETTINGS} 2>&1")
-        return if (canWriteSecureSettings) null else output.trim().ifEmpty { "Permission non accordée" }
+        if (!canWriteSecureSettings) return output.trim().ifEmpty { "Permission non accordée" }
+        // Android 12+ kills the processes started by apps beyond 32 ("phantom processes"): Linux needs more
+        // (node, npm, Claude Code and their children). Same fix as recommended by Termux.
+        runCatching {
+            exec(
+                "device_config set_sync_disabled_for_tests persistent; " +
+                    "device_config put activity_manager max_phantom_processes 2147483647; " +
+                    "settings put global settings_enable_monitor_phantom_procs false"
+            )
+        }
+        return null
     }
 
     /** Explanation shown when [testPermissions] fails. */
@@ -242,6 +252,8 @@ object Adb {
     // --- Identity ---
 
     private class Manager(private val key: PrivateKey, val cert: X509Certificate) : AbsAdbConnectionManager() {
+        val privateKeyBytes: ByteArray get() = key.encoded
+
         init {
             api = Build.VERSION.SDK_INT
             setTimeout(10, TimeUnit.SECONDS)
@@ -279,6 +291,12 @@ object Adb {
             name, BigInteger.valueOf(now), Date(now - 86_400_000L), Date(now + 20 * 365 * 86_400_000L), name, pair.public,
         ).build(JcaContentSignerBuilder("SHA256withRSA").build(pair.private))
         return pair.private to JcaX509CertificateConverter().getCertificate(holder)
+    }
+
+    /** Same key for the adb of the Linux environment, in the PEM format of ~/.android/adbkey. */
+    internal fun privateKeyPem(): String {
+        val key = synchronized(lock) { manager() }.privateKeyBytes
+        return "-----BEGIN PRIVATE KEY-----\n" + b64(key).chunked(64).joinToString("\n") + "\n-----END PRIVATE KEY-----\n"
     }
 
     /** adb_keys line of this app, as a PC's ~/.android/adbkey.pub. */

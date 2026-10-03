@@ -119,6 +119,37 @@ class SmokeTest {
         }
     }
 
+    /** Real install: downloads Alpine, installs the base tools with apk, then runs node under proot. */
+    @Test
+    fun linuxInstallsAndRunsNode() {
+        assumeTrue("no proot for this ABI", Linux.supported)
+        Linux.minimal = true
+        try {
+            var tab: Tab? = null
+            instrumentation.runOnMainSync { tab = Sessions.open(Linux.server) }
+            val session = tab!!.session
+            instrumentation.runOnMainSync { session.updateSize(80, 24, 10, 20) }
+            session.waitFor("linux install", 15 * 60_000) { Linux.provisioned.exists() }
+            Thread.sleep(3000)
+
+            instrumentation.runOnMainSync { session.write("node -e 'console.log(\"NODE_\" + 6*7)'\r") }
+            session.waitFor("node output", 120_000) { screen(session).contains("NODE_42") }
+
+            instrumentation.runOnMainSync { session.updateSize(100, 30, 10, 20) }
+            Thread.sleep(500)
+            instrumentation.runOnMainSync { session.write("stty size; npm --version && echo NPM_OK\r") }
+            session.waitFor("npm and resized pty", 120_000) {
+                screen(session).let { it.contains("30 100") && it.contains("NPM_OK") }
+            }
+            shotSession(session, "6-linux")
+
+            instrumentation.runOnMainSync { Sessions.close(tab!!) }
+            session.waitFor("linux exit") { !session.isRunning }
+        } finally {
+            Linux.minimal = false
+        }
+    }
+
     /** Screenshots of the real screens, pulled by the CI workflow to review the look. */
     @Test
     fun screenshots() {
@@ -181,8 +212,18 @@ class SmokeTest {
         return text
     }
 
-    private fun com.termux.terminal.TerminalSession.waitFor(what: String, condition: () -> Boolean) {
-        val deadline = System.currentTimeMillis() + 30_000
+    /** Terminal screen of a session, through the real activity. */
+    private fun shotSession(session: com.termux.terminal.TerminalSession, name: String) {
+        val tab = Sessions.tabs.find { it.session === session }
+        if (tab == null) return
+        val context = instrumentation.targetContext
+        instrumentation.runOnMainSync { Sessions.current = tab }
+        context.startActivity(Intent(context, TerminalActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        shot(name)
+    }
+
+    private fun com.termux.terminal.TerminalSession.waitFor(what: String, timeoutMs: Long = 30_000, condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
             if (condition()) return
             Thread.sleep(100)

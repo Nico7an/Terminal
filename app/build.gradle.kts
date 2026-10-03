@@ -56,12 +56,21 @@ android {
         buildConfig = true
     }
 
+    // Local pseudo-terminals for the built-in Linux environment.
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     packaging {
+        // proot is shipped as libproot.so: it must exist as a real (executable) file in nativeLibraryDir.
+        jniLibs.useLegacyPackaging = true
         resources.excludes += setOf("META-INF/versions/**", "META-INF/*.md", "META-INF/LICENSE*", "META-INF/NOTICE*", "META-INF/DEPENDENCIES")
     }
 

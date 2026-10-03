@@ -5,6 +5,13 @@ Client SSH Android minimaliste (téléphones et tablettes) : une liste de serveu
 ## Fonctionnement
 
 - **Accueil** : la liste des serveurs enregistrés. Un tap ouvre un onglet connecté.
+- **Linux** (intégré, non supprimable) : un vrai Linux (Alpine) dans l'appli, comme Termux, sans root.
+  À la première ouverture, il s'installe tout seul dans l'onglet : Node.js/npm, git, ripgrep, python3, adb,
+  **Claude Code** (`claude`) et **Gemini CLI** (`gemini`). Ensuite `apk add …` et `npm install -g …` comme partout.
+  - `proot` (paquet Termux, voir `tools/fetch-proot.sh`) est embarqué en bibliothèque native : Android interdit
+    d'exécuter des fichiers téléchargés, son loader charge les binaires Linux lui-même.
+  - `adb` y est déjà relié à l'appareil : même clé que l'entrée « Cet appareil », port trouvé par l'appli.
+  - Appui long → « Réinstaller » efface l'environnement.
 - **Cet appareil** (toujours en tête, non supprimable) : un `adb shell` sur l'appareil lui-même via le débogage sans fil
   (Android 11+), sans root ni PC. L'appli est son propre client adb (appairage, TLS, protocole shell v2).
   - Un assistant vérifie chaque prérequis (options développeur, Wi-Fi, débogage sans fil, appairage) et ouvre le bon écran des paramètres.
@@ -38,6 +45,9 @@ En parallèle, `Smoke test` lance l'appli sur un émulateur avec une vraie conne
 Le moteur d'émulation (`com.termux.terminal`, `com.termux.view`) vient de
 [termux-app](https://github.com/termux/termux-app), sous licence Apache 2.0 (voir `LICENSE-termux-terminal`),
 adapté pour être piloté par SSH au lieu d'un processus local. SSH : [sshj](https://github.com/hierynomus/sshj) (Apache 2.0).
+Linux : [proot](https://github.com/termux/proot) (GPL-2.0, binaire du paquet Termux, voir `LICENSE-proot`),
+[talloc](https://talloc.samba.org) (LGPL-3.0), [libandroid-shmem](https://github.com/termux/libandroid-shmem) (BSD-3-Clause) ;
+Alpine Linux est téléchargé depuis ses miroirs officiels (somme SHA-256 vérifiée).
 adb : [libadb-android](https://github.com/MuntashirAkon/libadb-android) (Apache 2.0, au choix avec GPL-3.0),
 qui dépend de [spake2-java](https://github.com/MuntashirAkon/spake2-java) (LGPL-3.0) et de [Conscrypt](https://github.com/google/conscrypt) (Apache 2.0).
 Police : Cascadia Mono (SIL OFL 1.1, voir `LICENSE-cascadia-font.txt`).

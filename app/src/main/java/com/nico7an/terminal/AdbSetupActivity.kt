@@ -167,7 +167,8 @@ class AdbSetupActivity : Activity() {
                 testing -> "Connexion à adb et test d'une commande système (pm grant)…"
                 connectError != null -> "Connexion impossible : $connectError"
                 !ready || output == null -> "Lancé automatiquement une fois l'appareil appairé : vérifie que adb peut agir sur le système et pas seulement le lire."
-                output.isEmpty() -> "adb peut agir sur le système (pm, settings, input…). Terminal a obtenu le droit de réactiver le débogage sans fil tout seul."
+                output.isEmpty() -> "adb peut agir sur le système (pm, settings, input…). Terminal a obtenu le droit de réactiver " +
+                    "le débogage sans fil tout seul, et a levé la limite d'Android sur le nombre de processus (utile pour Linux)."
                 else -> Adb.permissionHelp(output)
             },
             if (!ready || testing) null else "Tester" to { runTest() },
