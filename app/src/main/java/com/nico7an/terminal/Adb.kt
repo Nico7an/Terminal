@@ -16,7 +16,6 @@ import android.util.Base64
 import android.util.Log
 import io.github.muntashirakon.adb.AbsAdbConnectionManager
 import io.github.muntashirakon.adb.AdbPairingRequiredException
-import io.github.muntashirakon.adb.AndroidPubkey
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
@@ -26,6 +25,8 @@ import java.io.IOException
 import java.math.BigInteger
 import java.net.InetAddress
 import java.net.NetworkInterface
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
@@ -281,8 +282,20 @@ object Adb {
 
     /** adb_keys line of this app, as a PC's ~/.android/adbkey.pub. */
     internal fun publicKeyLine(): String {
-        val cert = synchronized(lock) { manager() }.cert
-        return String(AndroidPubkey.encodeWithName(cert.publicKey as RSAPublicKey, "terminal"), Charsets.UTF_8).trimEnd('\u0000')
+        val key = synchronized(lock) { manager() }.cert.publicKey as RSAPublicKey
+        // struct RSAPublicKey of AOSP android_pubkey: sizes, -1/n[0] mod 2^32, n and R^2 mod n little-endian, e.
+        val n = key.modulus
+        val r32 = BigInteger.ONE.shiftLeft(32)
+        val n0inv = r32.subtract(n.mod(r32).modInverse(r32)).toInt()
+        val rr = BigInteger.ONE.shiftLeft(4096).mod(n)
+        fun littleEndian(v: BigInteger): ByteArray {
+            val be = v.toByteArray()
+            return ByteArray(256) { i -> be.getOrElse(be.size - 1 - i) { 0 } }
+        }
+        val blob = ByteBuffer.allocate(4 + 4 + 256 + 256 + 4).order(ByteOrder.LITTLE_ENDIAN)
+            .putInt(64).putInt(n0inv).put(littleEndian(n)).put(littleEndian(rr)).putInt(key.publicExponent.toInt())
+            .array()
+        return b64(blob) + " terminal"
     }
 
     private fun b64(bytes: ByteArray) = Base64.encodeToString(bytes, Base64.NO_WRAP)
