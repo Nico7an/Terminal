@@ -166,7 +166,8 @@ object Adb {
     }
 
     private fun attempt(m: Manager, port: Int): Boolean = try {
-        m.connect(HOST, port)
+        // false on timeout: drop the half-open connection, the next attempt builds a new one.
+        m.connect(HOST, port).also { if (!it) runCatching { m.disconnect() } }
     } catch (e: AdbPairingRequiredException) {
         paired = false
         throw AdbSetupException(AdbBlocker.PAIRING.message)

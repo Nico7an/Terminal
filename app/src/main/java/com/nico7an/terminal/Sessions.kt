@@ -209,7 +209,7 @@ object Sessions : TerminalSessionClient, Prompter, AdbPrompter {
                 if (a.isFinishing) return@post
                 AlertDialog.Builder(a)
                     .setTitle(if (Adb.isXiaomi) "HyperOS bloque adb" else "adb est limité")
-                    .setMessage(Adb.permissionHelp(output))
+                    .setMessage(Adb.permissionHelp(output).nbsp())
                     .setPositiveButton("Options développeur") { _, _ ->
                         runCatching { a.startActivity(Adb.developerIntent()) }
                     }

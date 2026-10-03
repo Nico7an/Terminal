@@ -7,6 +7,9 @@ import android.view.WindowInsets
 
 fun Context.dp(value: Int): Int = (value * resources.displayMetrics.density + 0.5f).toInt()
 
+/** French quotes never end up alone at the end of a line. */
+fun String.nbsp(): String = replace("« ", "«\u00A0").replace(" »", "\u00A0»")
+
 /**
  * Edge-to-edge is enforced from Android 15: pad the root view with the system bars, the display
  * cutout and the keyboard so nothing is drawn under them.

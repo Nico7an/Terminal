@@ -148,9 +148,9 @@ class AdbSetupActivity : Activity() {
         )
 
         findViewById<View>(R.id.pairing_panel).visibility = if (pairing && !paired) View.VISIBLE else View.GONE
-        findViewById<TextView>(R.id.pairing_status).text = AdbPairing.message
+        findViewById<TextView>(R.id.pairing_status).text = (AdbPairing.message
             ?: if (AdbPairing.port > 0) "Service d'appairage trouvé (port ${AdbPairing.port}). Saisis le code à 6 chiffres."
-            else "Recherche du service d'appairage… Touche « Associer l'appareil avec un code » dans le débogage sans fil."
+            else "Recherche du service d'appairage… Touche « Associer l'appareil avec un code » dans le débogage sans fil.").nbsp()
         findViewById<View>(R.id.pairing_submit).isEnabled = !AdbPairing.busy
 
         val output = testOutput
@@ -186,7 +186,10 @@ class AdbSetupActivity : Activity() {
             },
         )
 
-        findViewById<View>(R.id.open).isEnabled = ready
+        findViewById<View>(R.id.open).apply {
+            isEnabled = ready
+            alpha = if (ready) 1f else 0.4f
+        }
         findViewById<TextView>(R.id.summary).text = when {
             !ready -> Adb.blocker()?.message ?: ""
             output?.isNotEmpty() == true -> "Connecté, mais HyperOS bloque certaines commandes"
@@ -202,7 +205,7 @@ class AdbSetupActivity : Activity() {
     ) {
         val view = findViewById<View>(id)
         view.findViewById<TextView>(R.id.title).text = title
-        view.findViewById<TextView>(R.id.help).text = help
+        view.findViewById<TextView>(R.id.help).text = help.nbsp()
         view.findViewById<TextView>(R.id.state).apply {
             text = state.label
             setTextColor(getColor(state.color))
@@ -258,7 +261,7 @@ class AdbSetupActivity : Activity() {
     private fun showPermissionHelp(output: String) {
         AlertDialog.Builder(this)
             .setTitle(if (Adb.isXiaomi) "HyperOS bloque adb" else "adb est limité")
-            .setMessage(Adb.permissionHelp(output))
+            .setMessage(Adb.permissionHelp(output).nbsp())
             .setPositiveButton("Options développeur") { _, _ -> launch(Adb.developerIntent()) }
             .setNeutralButton("Retester") { _, _ -> runTest() }
             .setNegativeButton("Fermer", null)
