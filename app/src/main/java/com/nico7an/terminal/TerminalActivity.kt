@@ -143,7 +143,14 @@ class TerminalActivity : Activity(), Sessions.Listener, TerminalViewClient {
             tabsView.addView(view)
             if (selected) selectedView = view
         }
-        selectedView?.let { v -> tabsScroll.post { tabsScroll.requestChildFocus(tabsView, v); tabsScroll.smoothScrollTo(v.left - dp(24), 0) } }
+        selectedView?.let { v ->
+            tabsScroll.post {
+                // The tabs may have been rebuilt in the meantime.
+                if (v.parent !== tabsView) return@post
+                tabsScroll.requestChildFocus(tabsView, v)
+                tabsScroll.smoothScrollTo(v.left - dp(24), 0)
+            }
+        }
     }
 
     private fun select(tab: Tab) {

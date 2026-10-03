@@ -129,6 +129,12 @@ class SmokeTest {
             instrumentation.runOnMainSync { tab = Sessions.open(Linux.server) }
             val session = tab!!.session
             instrumentation.runOnMainSync { session.updateSize(80, 24, 10, 20) }
+            if (android.os.Build.SUPPORTED_ABIS[0] != "arm64-v8a") {
+                // Download, checksum, extraction, proot and the pty work everywhere, but on x86_64 Android's
+                // seccomp filter rejects the fork syscall of musl (arm64 has none: musl uses clone there).
+                session.waitFor("linux shell under proot", 5 * 60_000) { screen(session).contains("Première ouverture") }
+                return
+            }
             session.waitFor("linux install", 15 * 60_000) { Linux.provisioned.exists() }
             Thread.sleep(3000)
 
@@ -147,6 +153,7 @@ class SmokeTest {
             session.waitFor("linux exit") { !session.isRunning }
         } finally {
             Linux.minimal = false
+            instrumentation.runOnMainSync { Sessions.closeAll() }
         }
     }
 
