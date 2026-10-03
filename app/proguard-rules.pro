@@ -3,6 +3,10 @@
 -keep class com.hierynomus.sshj.** { *; }
 -keep class org.bouncycastle.jcajce.provider.** { *; }
 -keep class org.bouncycastle.jce.provider.** { *; }
+# libadb loads Conscrypt and its SPAKE2 native bindings by reflection / JNI.
+-keep class io.github.muntashirakon.** { *; }
+-keep class org.conscrypt.** { *; }
+-dontwarn org.conscrypt.**
 -dontwarn org.slf4j.**
 -dontwarn javax.naming.**
 -dontwarn org.ietf.jgss.**

@@ -23,6 +23,12 @@ class App : Application() {
             }
         )
 
+        getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel(AdbPairing.CHANNEL_ID, "Appairage adb", NotificationManager.IMPORTANCE_HIGH).apply {
+                setShowBadge(false)
+            }
+        )
+
         // Warm up the slow parts off the main thread so the first connection is instant.
         Thread({
             Vault.load(this)

@@ -10,6 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Only the ADB library (and its SPAKE2 dependency) come from JitPack.
+        maven("https://jitpack.io") {
+            content { includeGroupByRegex("com\\.github\\.MuntashirAkon.*") }
+        }
     }
 }
 rootProject.name = "Terminal"

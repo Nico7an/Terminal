@@ -50,7 +50,7 @@ class SshService : Service() {
         val names = Sessions.tabs.joinToString(", ") { it.server.name }
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_prompt)
-            .setContentTitle(if (count == 1) "1 session SSH" else "$count sessions SSH")
+            .setContentTitle(if (count == 1) "1 session" else "$count sessions")
             .setContentText(names)
             .setContentIntent(open)
             .setOngoing(true)

@@ -71,6 +71,54 @@ class SmokeTest {
         session.waitFor("disconnect") { !session.isRunning }
     }
 
+    @Test
+    fun adbIdentityIsValid() {
+        val (key, cert) = Adb.generateIdentity()
+        assertEquals("RSA", key.algorithm)
+        cert.verify(cert.publicKey)
+        assertTrue(Adb.publicKeyLine().endsWith(" terminal"))
+    }
+
+    /** Written for ci/smoke.sh, which adds it to the emulator's adb_keys before [adbShellRunsCommandsAndResizes]. */
+    @Test
+    fun exportAdbKey() {
+        val dir = instrumentation.targetContext.getExternalFilesDir(null)!!
+        File(dir, "adb_key.pub").writeText(Adb.publicKeyLine() + "\n")
+    }
+
+    /** The emulator's adbd on a plain TCP port stands in for wireless debugging (same protocol after TLS). */
+    @Test
+    fun adbShellRunsCommandsAndResizes() {
+        val port = args.getString("adbPort")?.toIntOrNull()
+        assumeTrue("no adb port configured", port != null)
+        Adb.testPort = port!!
+        try {
+            val tab = Tab(Adb.server)
+            val session = tab.session
+
+            instrumentation.runOnMainSync { session.updateSize(80, 24, 10, 20) }
+            session.waitFor("adb connection") { session.isRunning }
+
+            instrumentation.runOnMainSync { session.write("echo ADB_$((6*7)) $(id -un)\r") }
+            session.waitFor("adb command output") { screen(session).contains("ADB_42") }
+
+            instrumentation.runOnMainSync { session.updateSize(100, 30, 10, 20) }
+            Thread.sleep(500)
+            instrumentation.runOnMainSync { session.write("stty size\r") }
+            session.waitFor("resized adb pty") { screen(session).contains("30 100") }
+
+            // The HyperOS check: on a stock emulator adb is allowed to grant the permission.
+            assertEquals(null, Adb.testPermissions())
+            assertTrue(Adb.canWriteSecureSettings)
+
+            instrumentation.runOnMainSync { session.finishIfRunning() }
+            session.waitFor("adb disconnect") { !session.isRunning }
+        } finally {
+            Adb.testPort = -1
+            Adb.disconnect()
+        }
+    }
+
     /** Screenshots of the real screens, pulled by the CI workflow to review the look. */
     @Test
     fun screenshots() {
@@ -110,6 +158,10 @@ class SmokeTest {
         }
         Thread.sleep(2000)
         shot("3-terminal")
+
+        context.startActivity(Intent(context, AdbSetupActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        Thread.sleep(1500)
+        shot("5-adb-setup")
 
         instrumentation.runOnMainSync { Sessions.closeAll() }
     }

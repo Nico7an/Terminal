@@ -79,6 +79,10 @@ dependencies {
     implementation("androidx.annotation:annotation:1.9.1")
     implementation("com.hierynomus:sshj:0.41.1")
     implementation("org.bouncycastle:bcprov-jdk18on:1.84")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.84")
+    // ADB client (pairing + TLS) for the local "this device" terminal. Its BouncyCastle is the same as ours.
+    implementation("com.github.MuntashirAkon:libadb-android:3.1.1") { exclude(group = "org.bouncycastle") }
+    implementation("org.conscrypt:conscrypt-android:2.5.3")
 
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

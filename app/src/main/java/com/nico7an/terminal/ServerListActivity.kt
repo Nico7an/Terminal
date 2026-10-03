@@ -65,19 +65,37 @@ class ServerListActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        servers = Vault.servers()
+        val saved = Vault.servers()
+        servers = listOf(Adb.server) + saved
         adapter.notifyDataSetChanged()
-        empty.visibility = if (servers.isEmpty()) View.VISIBLE else View.GONE
+        empty.visibility = if (saved.isEmpty()) View.VISIBLE else View.GONE
         Updater.check { release -> showUpdate(release) }
     }
 
     private fun connect(server: Server) {
+        // This device: straight to the terminal when everything is ready, to the checklist otherwise.
+        if (server.id == Adb.SERVER_ID && (!Adb.supported || Adb.blocker() != null)) {
+            startActivity(Intent(this, AdbSetupActivity::class.java))
+            if (pick) finish()
+            return
+        }
         Sessions.open(server)
         startActivity(Intent(this, TerminalActivity::class.java))
         if (pick) finish()
     }
 
     private fun showMenu(anchor: View, server: Server) {
+        if (server.id == Adb.SERVER_ID) {
+            // Built in: can be configured, never edited or deleted.
+            PopupMenu(this, anchor).apply {
+                menu.add("Configurer").setOnMenuItemClickListener {
+                    startActivity(Intent(this@ServerListActivity, AdbSetupActivity::class.java))
+                    true
+                }
+                show()
+            }
+            return
+        }
         PopupMenu(this, anchor).apply {
             menu.add("Modifier").setOnMenuItemClickListener {
                 startActivity(Intent(this@ServerListActivity, ServerEditActivity::class.java)
@@ -146,11 +164,14 @@ class ServerListActivity : Activity() {
             val view = convertView ?: layoutInflater.inflate(R.layout.item_server, parent, false)
             val server = servers[position]
             view.findViewById<TextView>(R.id.name).text = server.name
-            view.findViewById<TextView>(R.id.address).text = server.address
-            view.findViewById<TextView>(R.id.auth).text = when (server.auth) {
-                AuthType.KEY -> "clé"
-                AuthType.PASSWORD -> "mdp"
-                AuthType.NONE -> "tailscale"
+            val local = server.id == Adb.SERVER_ID
+            view.findViewById<TextView>(R.id.address).text =
+                if (local) "adb shell · ${android.os.Build.MODEL}" else server.address
+            view.findViewById<TextView>(R.id.auth).text = when {
+                local -> "adb"
+                server.auth == AuthType.KEY -> "clé"
+                server.auth == AuthType.PASSWORD -> "mdp"
+                else -> "tailscale"
             }
             val count = Sessions.countFor(server.id)
             view.findViewById<TextView>(R.id.badge).apply {

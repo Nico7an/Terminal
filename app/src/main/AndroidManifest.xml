@@ -3,6 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- "This device" terminal: is Wi-Fi up (wireless debugging needs it). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Only obtainable through adb (pm grant): lets the app turn wireless debugging back on by itself. -->
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -45,6 +51,11 @@
             android:name=".KeysActivity"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".AdbSetupActivity"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize" />
+
         <service
             android:name=".SshService"
             android:exported="false"
@@ -56,6 +67,10 @@
 
         <receiver
             android:name=".UpdateReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".AdbPairingReceiver"
             android:exported="false" />
     </application>
 </manifest>

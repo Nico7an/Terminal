@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/chrome"
+    android:orientation="vertical">
+
+    <include layout="@layout/header" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:id="@+id/intro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:lineSpacingExtra="3dp"
+                android:text="Un shell adb sur cet appareil, sans root ni PC, grâce au débogage sans fil. Terminal fait le maximum tout seul : il reste à suivre les étapes en rouge."
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <include android:id="@+id/step_developer" layout="@layout/item_step" />
+            <include android:id="@+id/step_wifi" layout="@layout/item_step" />
+            <include android:id="@+id/step_wireless" layout="@layout/item_step" />
+            <include android:id="@+id/step_pairing" layout="@layout/item_step" />
+
+            <LinearLayout
+                android:id="@+id/pairing_panel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/pairing_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/pairing_code"
+                        style="@style/Field"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/cascadia_mono"
+                        android:hint="Code à 6 chiffres"
+                        android:imeOptions="actionDone"
+                        android:inputType="number"
+                        android:maxLength="6" />
+
+                    <Button
+                        android:id="@+id/pairing_submit"
+                        style="@style/ButtonAccent"
+                        android:layout_marginStart="8dp"
+                        android:text="Appairer" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <include android:id="@+id/step_test" layout="@layout/item_step" />
+            <include android:id="@+id/step_battery" layout="@layout/item_step" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical|end"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/summary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <Button android:id="@+id/open" style="@style/ButtonAccent" android:layout_marginStart="8dp" android:text="Ouvrir le terminal" />
+    </LinearLayout>
+</LinearLayout>

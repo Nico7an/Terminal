@@ -4,6 +4,8 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
@@ -19,12 +21,13 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 
 class Tab(val server: Server) {
-    val transport = SshTransport(server, Sessions)
+    val transport: TerminalSession.Transport =
+        if (server.id == Adb.SERVER_ID) AdbTransport(Sessions) else SshTransport(server, Sessions)
     val session = TerminalSession(transport, 5000, Sessions).apply { mSessionName = server.name }
 }
 
 /** Process-wide list of open tabs. Sessions outlive activities; the foreground service keeps the process alive. */
-object Sessions : TerminalSessionClient, Prompter {
+object Sessions : TerminalSessionClient, Prompter, AdbPrompter {
 
     interface Listener {
         fun onScreenChanged(session: TerminalSession)
@@ -179,6 +182,42 @@ object Sessions : TerminalSessionClient, Prompter {
         }
         latch.await()
         return result
+    }
+
+    // --- AdbPrompter ---
+
+    /** The HyperOS permission test runs once per process, not for every adb tab. */
+    @Volatile private var adbTested = false
+
+    override fun onAdbBlocked(reason: String) {
+        main.post {
+            val a = activity.get() ?: return@post
+            if (a.isFinishing) return@post
+            a.startActivity(Intent(a, AdbSetupActivity::class.java).putExtra(AdbSetupActivity.EXTRA_REASON, reason))
+        }
+    }
+
+    override fun onAdbConnected() {
+        if (adbTested) return
+        adbTested = true
+        Thread({
+            val output = runCatching { Adb.testPermissions() }.getOrNull() ?: return@Thread
+            val prefs = App.instance.getSharedPreferences("adb", Context.MODE_PRIVATE)
+            if (prefs.getBoolean("muteWarning", false)) return@Thread
+            main.post {
+                val a = activity.get() ?: return@post
+                if (a.isFinishing) return@post
+                AlertDialog.Builder(a)
+                    .setTitle(if (Adb.isXiaomi) "HyperOS bloque adb" else "adb est limité")
+                    .setMessage(Adb.permissionHelp(output))
+                    .setPositiveButton("Options développeur") { _, _ ->
+                        runCatching { a.startActivity(Adb.developerIntent()) }
+                    }
+                    .setNeutralButton("Ne plus afficher") { _, _ -> prefs.edit().putBoolean("muteWarning", true).apply() }
+                    .setNegativeButton("OK", null)
+                    .show()
+            }
+        }, "adb-test").start()
     }
 
     fun toast(text: String) = main.post { Toast.makeText(App.instance, text, Toast.LENGTH_SHORT).show() }

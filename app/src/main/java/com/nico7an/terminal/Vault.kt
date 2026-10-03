@@ -59,6 +59,9 @@ object Vault {
     private val keys = mutableListOf<SshKey>()
     /** "host:port" -> "keytype base64(blob)" */
     private val knownHosts = mutableMapOf<String, String>()
+    /** Key and certificate this app presents to the local adbd (base64 PKCS#8 / DER). */
+    private var adbKey: String? = null
+    private var adbCert: String? = null
 
     fun load(context: Context) = synchronized(lock) {
         if (loaded) return
@@ -80,6 +83,8 @@ object Vault {
         servers.clear()
         keys.clear()
         knownHosts.clear()
+        adbKey = null
+        adbCert = null
         loaded = false
         load(context)
     }
@@ -116,6 +121,18 @@ object Vault {
 
     fun setKnownHost(hostPort: String, value: String) = mutate { knownHosts[hostPort] = value }
 
+    fun adbIdentity(): Pair<String, String>? = synchronized(lock) {
+        ensureLoaded()
+        val key = adbKey ?: return null
+        val cert = adbCert ?: return null
+        key to cert
+    }
+
+    fun setAdbIdentity(key: String, cert: String) = mutate {
+        adbKey = key
+        adbCert = cert
+    }
+
     private inline fun mutate(block: () -> Unit) = synchronized(lock) {
         ensureLoaded()
         block()
@@ -140,6 +157,8 @@ object Vault {
                 }
             })
             .put("knownHosts", JSONObject(knownHosts as Map<*, *>))
+            .put("adbKey", adbKey)
+            .put("adbCert", adbCert)
         val out = file.startWrite()
         try {
             out.write(encrypt(json.toString().toByteArray(Charsets.UTF_8)))
@@ -175,6 +194,8 @@ object Vault {
         json.optJSONObject("knownHosts")?.let { o ->
             o.keys().forEach { knownHosts[it] = o.getString(it) }
         }
+        adbKey = json.optStringOrNull("adbKey")
+        adbCert = json.optStringOrNull("adbCert")
     }
 
     private fun JSONObject.optStringOrNull(name: String): String? =
